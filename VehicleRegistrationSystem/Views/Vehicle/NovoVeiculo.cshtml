@@ -1,0 +1,157 @@
+@model VehicleRegistrationSystem.Models.NewVehicle
+@{
+    ViewData["Title"] = "Novo Veículo";
+}
+
+<h2 class="mb-4">Novo Veículo</h2>
+
+<div class="upload-form-container">
+    <div class="processamento-titulo">Cadastro de Veículo</div>
+    <p>Preencha os dados do novo veículo para cadastrá-lo no sistema.</p>
+
+    <form id="novoVeiculoForm">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="containerNumber" class="form-label">Nº Container</label>
+                <input type="text" class="form-control" id="containerNumber" name="containerNumber" required>
+            </div>
+            <div class="col-md-4">
+                <label for="chassis" class="form-label">Chassi</label>
+                <input type="text" class="form-control" id="chassis" name="chassis" required>
+            </div>
+            <div class="col-md-4">
+                <label for="engine" class="form-label">Motor</label>
+                <input type="text" class="form-control" id="engine" name="engine" required>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="branchCode" class="form-label">Código da Filial</label>
+                <input type="number" class="form-control" id="branchCode" name="branchCode" value="87">
+            </div>
+            <div class="col-md-4">
+                <label for="color" class="form-label">Cor</label>
+                <input type="text" class="form-control" id="color" name="color" value="PRETO">
+            </div>
+            <div class="col-md-4">
+                <label for="modelYear" class="form-label">Ano do Modelo</label>
+                <input type="number" class="form-control" id="modelYear" name="modelYear" value="2025">
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="callApi" name="callApi">
+                <label class="form-check-label" for="callApi">
+                    Registrar na API externa
+                </label>
+                <small class="form-text text-muted d-block">
+                    Se marcado, o veículo será registrado na API externa. Caso contrário, será salvo apenas localmente.
+                </small>
+            </div>
+        </div>
+        
+        <div class="d-flex">
+            <button type="button" id="saveLocalBtn" class="btn btn-primary me-2">Salvar Veículo</button>
+            <a href="@Url.Action("VeiculosRegistrados", "Vehicle")" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Botão para salvar localmente
+            $("#saveLocalBtn").click(function() {
+                let isValid = true;
+                
+                // Validar campos obrigatórios
+                if ($("#containerNumber").val().trim() === "") {
+                    alert("Por favor, informe o número do container.");
+                    $("#containerNumber").focus();
+                    isValid = false;
+                }
+                else if ($("#chassis").val().trim() === "") {
+                    alert("Por favor, informe o chassi do veículo.");
+                    $("#chassis").focus();
+                    isValid = false;
+                }
+                else if ($("#engine").val().trim() === "") {
+                    alert("Por favor, informe o número do motor.");
+                    $("#engine").focus();
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    return false;
+                }
+                
+                // Criar objeto do veículo
+                const vehicle = {
+                    containerNumber: $("#containerNumber").val(),
+                    chassis: $("#chassis").val(),
+                    engine: $("#engine").val(),
+                    branchCode: $("#branchCode").val(),
+                    color: $("#color").val(),
+                    modelYear: $("#modelYear").val(),
+                    dateRegistered: new Date().toLocaleDateString('pt-BR')
+                };
+                
+                // Salvar no localStorage
+                saveVehicleLocally(vehicle);
+                
+                // Redirecionar para a página de veículos registrados
+                window.location.href = "@Url.Action("VeiculosRegistrados", "Vehicle")";
+            });
+            
+            // Função para salvar veículo localmente
+            function saveVehicleLocally(vehicle) {
+                try {
+                    // Obter veículos salvos
+                    let savedVehicles = [];
+                    try {
+                        const savedVehiclesStr = localStorage.getItem('savedVehicles');
+                        if (savedVehiclesStr) {
+                            savedVehicles = JSON.parse(savedVehiclesStr);
+                            if (!Array.isArray(savedVehicles)) {
+                                console.error("savedVehicles não é um array:", savedVehicles);
+                                savedVehicles = [];
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Erro ao obter veículos salvos:", e);
+                        savedVehicles = [];
+                    }
+                    
+                    console.log("Veículos existentes:", savedVehicles);
+                    
+                    // Verificar se o veículo já existe
+                    const existingIndex = savedVehicles.findIndex(v => v.chassis === vehicle.chassis);
+                    if (existingIndex >= 0) {
+                        // Atualizar veículo existente
+                        savedVehicles[existingIndex] = vehicle;
+                        console.log("Atualizando veículo existente:", vehicle);
+                    } else {
+                        // Adicionar novo veículo
+                        savedVehicles.push(vehicle);
+                        console.log("Adicionando novo veículo:", vehicle);
+                    }
+                    
+                    // Salvar no localStorage
+                    localStorage.setItem('savedVehicles', JSON.stringify(savedVehicles));
+                    
+                    // Verificar se o veículo foi salvo corretamente
+                    const checkSaved = localStorage.getItem('savedVehicles');
+                    console.log("Veículos salvos (verificação):", checkSaved);
+                    
+                    // Mostrar mensagem de sucesso
+                    alert("Veículo salvo com sucesso!");
+                } catch (error) {
+                    console.error("Erro ao salvar veículo:", error);
+                    alert("Erro ao salvar veículo: " + error.message);
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,185 @@
+@model List<VehicleRegistrationSystem.Models.NewVehicle>
+@{
+    ViewData["Title"] = "Novos Veículos";
+}
+
+<h2 class="mb-4">Novos Veículos</h2>
+
+<div class="upload-form-container">
+    <div class="processamento-titulo">Upload de Veículos</div>
+    <p>Faça upload de um arquivo CSV contendo a lista de novos veículos.</p>
+    <p><small class="text-muted">O arquivo deve conter as colunas: numero do conteiner, chassi, motor</small></p>
+
+    <form method="post" enctype="multipart/form-data">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="csvFile" class="form-label">Arquivo CSV</label>
+                <div class="input-group">
+                    <input type="file" class="form-control" id="csvFile" name="csvFile" accept=".csv">
+                </div>
+                <div class="form-text">Selecione um arquivo CSV com os dados dos veículos.</div>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="branchCode" class="form-label">Código da Filial</label>
+                <input type="number" class="form-control" id="branchCode" name="branchCode" value="87">
+            </div>
+            <div class="col-md-4">
+                <label for="color" class="form-label">Cor</label>
+                <input type="text" class="form-control" id="color" name="color" value="PRETO">
+            </div>
+            <div class="col-md-4">
+                <label for="modelYear" class="form-label">Ano do Modelo</label>
+                <input type="number" class="form-control" id="modelYear" name="modelYear" value="2025">
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            @if (!ViewContext.ModelState.IsValid && ViewContext.ModelState["csvFile"] != null)
+            {
+                <div class="alert alert-danger mt-2">
+                    @Html.ValidationMessage("csvFile")
+                </div>
+            }
+            <button type="submit" class="btn btn-primary">Processar Arquivo</button>
+        </div>
+    </form>
+    
+    <div class="mt-3">
+        <div class="processamento-exemplo">
+            Exemplo de formato do arquivo CSV:
+        </div>
+        <pre class="processamento-exemplo-text">numero do conteiner,chassi,motor
+CONT001,9BWHE21JX24060960,AEG123456
+CONT002,8AWPB05Z0BA025465,BGT789012
+CONT003,9BFZH55L0K8225770,CFR345678</pre>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Veículos Importados</h5>
+            <span class="badge bg-primary">@Model.Count registros</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nº Conteiner</th>
+                            <th>Chassi</th>
+                            <th>Motor</th>
+                            <th>Filial</th>
+                            <th>Cor</th>
+                            <th>Ano Modelo</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var vehicle in Model)
+                        {
+                            <tr>
+                                <td>@vehicle.ContainerNumber</td>
+                                <td>@vehicle.Chassis</td>
+                                <td>@vehicle.Engine</td>
+                                <td>@vehicle.BranchCode</td>
+                                <td>@vehicle.Color</td>
+                                <td>@vehicle.ModelYear</td>
+                                <td>
+                                    @if (ViewData[$"Status_{vehicle.Chassis}"] != null)
+                                    {
+                                        var status = (bool)ViewData[$"Success_{vehicle.Chassis}"];
+                                        if (status)
+                                        {
+                                            <span class="badge bg-success">Registrado</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger" title="@ViewData[$"Message_{vehicle.Chassis}"]">Falha</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Pendente</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Adiciona validação do lado do cliente para o arquivo CSV
+            $("#csvFile").change(function () {
+                const file = this.files[0];
+                if (file) {
+                    const fileType = file.name.split('.').pop().toLowerCase();
+                    if (fileType !== 'csv') {
+                        alert("Por favor, selecione um arquivo CSV válido.");
+                        $(this).val('');
+                    } else {
+                        // Mostra o nome do arquivo selecionado
+                        $(this).next('.form-text').text(`Arquivo selecionado: ${file.name}`);
+                    }
+                }
+            });
+            
+            // Salvar veículos processados no localStorage
+            @if (Model.Any())
+            {
+                <text>
+                // Salvar os veículos processados no localStorage
+                const processedVehicles = [];
+                
+                @foreach (var vehicle in Model)
+                {
+                    <text>
+                    const vehicle@(vehicle.Chassis.Replace("-", "")) = {
+                        containerNumber: "@vehicle.ContainerNumber",
+                        chassis: "@vehicle.Chassis",
+                        engine: "@vehicle.Engine",
+                        branchCode: "@vehicle.BranchCode",
+                        color: "@vehicle.Color",
+                        modelYear: "@vehicle.ModelYear",
+                        dateRegistered: "@DateTime.Now.ToString("dd/MM/yyyy")",
+                        status: "Pendente",
+                        plateStatus: "Novo"
+                    };
+                    processedVehicles.push(vehicle@(vehicle.Chassis.Replace("-", "")));
+                    </text>
+                }
+                
+                // Obter veículos já salvos
+                const savedVehicles = JSON.parse(localStorage.getItem('savedVehicles')) || [];
+                
+                // Adicionar novos veículos, evitando duplicatas
+                processedVehicles.forEach(vehicle => {
+                    // Verificar se o veículo já existe
+                    const exists = savedVehicles.some(v => v.chassis === vehicle.chassis);
+                    if (!exists) {
+                        savedVehicles.push(vehicle);
+                    }
+                });
+                
+                // Salvar no localStorage
+                localStorage.setItem('savedVehicles', JSON.stringify(savedVehicles));
+                
+                // Redirecionar para a página de veículos registrados após 2 segundos
+                setTimeout(function() {
+                    window.location.href = '@Url.Action("VeiculosRegistrados", "Vehicle")';
+                }, 2000);
+                </text>
+            }
+        });
+    </script>
+}

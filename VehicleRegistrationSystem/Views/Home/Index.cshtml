@@ -1,0 +1,44 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="container">
+    <h2 class="mb-4">Bem-vindo ao Sistema de Registro de Veículos</h2>
+    
+    <div class="alert alert-info">
+        <p>Este sistema permite gerenciar e processar informações de veículos.</p>
+        <p>Utilize o menu lateral para navegar entre as diferentes funcionalidades.</p>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Novos Veículos</h5>
+                    <p class="card-text">Processar novos veículos no sistema.</p>
+                    <a asp-controller="Vehicle" asp-action="NovosVeiculos" class="btn btn-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Manutenção</h5>
+                    <p class="card-text">Gerenciar manutenções de veículos.</p>
+                    <a asp-controller="Home" asp-action="Manutencao" class="btn btn-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Vistorias</h5>
+                    <p class="card-text">Acompanhar vistorias realizadas.</p>
+                    <a asp-controller="Home" asp-action="Vistorias" class="btn btn-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

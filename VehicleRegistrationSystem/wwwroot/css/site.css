@@ -1,0 +1,299 @@
+:root {
+  --primary-color: #28a745;
+  --primary-dark: #218838;
+  --primary-light: #e6f7eb;
+  --text-on-primary: #ffffff;
+}
+
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  height: 100vh;
+}
+
+/* Estilo para o menu lateral */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  border-right: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+}
+
+.sidebar-header {
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+.logo-img {
+  width: 80px;
+  height: auto;
+}
+
+.mottu-logo {
+  color: var(--primary-color);
+  font-weight: bold;
+  font-size: 2rem;
+  margin: 0;
+  text-align: center;
+}
+
+.sidebar-content {
+  padding: 1rem 0;
+}
+
+.sidebar .nav {
+  flex-direction: column;
+}
+
+.sidebar .nav-item {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar .nav-link {
+  padding: 0.75rem 1.5rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.sidebar .nav-link:hover, .sidebar .nav-link.active {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.sidebar .nav-link i {
+  margin-right: 10px;
+  font-size: 18px;
+  color: var(--primary-color);
+}
+
+/* Estilo para o conteúdo principal */
+.main-content {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Estilo para o formulário de IDs de veículos */
+.vehicle-ids-form {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.vehicle-results {
+  margin-top: 20px;
+}
+
+.processing-status {
+  margin-top: 15px;
+}
+
+.processamento-container {
+  border-left: 4px solid var(--primary-color);
+  padding-left: 15px;
+  margin-bottom: 20px;
+}
+
+.processamento-titulo {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.processamento-textarea {
+  min-height: 150px;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.processamento-exemplo {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+.processamento-exemplo-text {
+  font-family: monospace;
+  color: #495057;
+}
+
+.vehicle-item {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-left: 4px solid var(--primary-color);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.vehicle-item.success {
+  border-left-color: var(--primary-color);
+}
+
+.vehicle-item.error {
+  border-left-color: #dc3545;
+}
+
+/* Botões estilizados */
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+/* Barra de progresso */
+.progress-bar {
+  background-color: var(--primary-color);
+}
+
+/* Cards */
+.card {
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 15px 20px;
+}
+
+/* Badges */
+.badge {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.badge-success, .bg-success {
+  background-color: #28a745 !important;
+}
+
+.badge-warning, .bg-warning {
+  background-color: #ffc107 !important;
+  color: #212529 !important;
+}
+
+.badge-danger, .bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.badge-info, .bg-info {
+  background-color: #17a2b8 !important;
+}
+
+.badge-primary, .bg-primary {
+  background-color: #007bff !important;
+}
+
+/* Tables */
+.table {
+  margin-bottom: 0;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+/* Form controls */
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Status badges */
+.status-ok {
+  background-color: #28a745;
+}
+
+.status-pendente {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.status-processamento {
+  background-color: #17a2b8;
+}
+
+/* Botões de ação */
+.btn-action {
+  margin-right: 5px;
+}
+
+/* Tabela de veículos */
+.veiculos-table th {
+  white-space: nowrap;
+}
+
+.veiculos-table td {
+  white-space: nowrap;
+}
+
+/* Contador de registros */
+.registros-count {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+/* Formulário de upload */
+.upload-form-container {
+  border-left: 4px solid var(--primary-color);
+  padding-left: 15px;
+  margin-bottom: 20px;
+}
+
+/* Footer */
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60px;
+  line-height: 60px;
+  background-color: #f5f5f5;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Botões estilizados */
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--primary-color);
+}

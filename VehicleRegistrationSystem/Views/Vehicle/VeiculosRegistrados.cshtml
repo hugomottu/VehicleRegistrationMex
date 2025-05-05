@@ -1,0 +1,490 @@
+@model List<VehicleRegistrationSystem.Models.VehicleInfo>
+@{
+    ViewData["Title"] = "Veículos Registrados";
+}
+
+<h2 class="mb-4">Veículos Registrados</h2>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" class="form-control" id="searchInput" placeholder="Buscar...">
+            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                <i class="bi bi-search"></i> Buscar
+            </button>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="statusFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Todos os Status
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="statusFilterDropdown">
+                <li><a class="dropdown-item" href="#" data-status="all">Todos</a></li>
+                <li><a class="dropdown-item" href="#" data-status="ok">OK</a></li>
+                <li><a class="dropdown-item" href="#" data-status="pendente">Pendente</a></li>
+                <li><a class="dropdown-item" href="#" data-status="aprovado">Aprovado</a></li>
+                <li><a class="dropdown-item" href="#" data-status="em-processamento">Em Processamento</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-3 text-end">
+        <div>
+            <span class="badge bg-primary">@Model.Count registros</span>
+            <button id="clearStorageBtn" class="btn btn-outline-secondary ms-2" title="Restaurar veículos excluídos">
+                <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+            </button>
+            <a href="@Url.Action("NovoVeiculo", "Vehicle")" class="btn btn-primary ms-2">
+                <i class="bi bi-plus-circle"></i> Novo Veículo
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Nº Container</th>
+                <th>Chassi</th>
+                <th>Motor</th>
+                <th>Filial</th>
+                <th>Cor</th>
+                <th>Ano Modelo</th>
+                <th>Data Registro</th>
+                <th>Status</th>
+                <th>Placa</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var vehicle in Model)
+            {
+                <tr data-id="@vehicle.Chassis">
+                    <td>@vehicle.ContainerNumber</td>
+                    <td>@vehicle.Chassis</td>
+                    <td>@vehicle.Engine</td>
+                    <td>@vehicle.BranchCode</td>
+                    <td>@vehicle.Color</td>
+                    <td>@vehicle.ModelYear</td>
+                    <td>@vehicle.DateRegistered</td>
+                    <td>
+                        @if (vehicle.Status == "Pendente")
+                        {
+                            <span class="badge bg-warning">Pendente</span>
+                        }
+                        else if (vehicle.Status == "OK")
+                        {
+                            <span class="badge bg-success">OK</span>
+                        }
+                        else if (vehicle.Status == "Aprovado")
+                        {
+                            <span class="badge bg-info">Aprovado</span>
+                        }
+                        else if (vehicle.Status == "Em Processamento")
+                        {
+                            <span class="badge bg-secondary">Em Processamento</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning">@vehicle.Status</span>
+                        }
+                    </td>
+                    <td>
+                        @if (vehicle.PlateStatus == "Novo")
+                        {
+                            <span class="badge bg-warning">Novo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning">@vehicle.PlateStatus</span>
+                        }
+                    </td>
+                    <td>
+                        <div class="d-flex">
+                            <a href="@Url.Action("SolicitacaoPlaca", "Vehicle", new { chassi = vehicle.Chassis })" class="btn btn-sm btn-success me-1">Solicitar Placa</a>
+                            <button class="btn btn-sm btn-outline-primary edit-btn me-1" data-id="@vehicle.Chassis" data-bs-toggle="tooltip" title="Editar veículo">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="@vehicle.Chassis" data-bs-toggle="tooltip" title="Excluir veículo">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="text-center mt-4">
+    <p class="text-muted">2025 - Sistema de Registro de Veículos - Mottu</p>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("Página de Veículos Registrados carregada");
+            
+            // Exibir mensagens de sucesso ou erro
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>
+                alert("@TempData["SuccessMessage"]");
+                </text>
+            }
+            
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>
+                alert("@TempData["ErrorMessage"]");
+                </text>
+            }
+            
+            // Inicializar o array de veículos excluídos no localStorage
+            if (!localStorage.getItem('excludedVehicles')) {
+                localStorage.setItem('excludedVehicles', JSON.stringify([]));
+            }
+            
+            // Verificar e ocultar veículos excluídos ao carregar a página
+            const excludedVehicles = JSON.parse(localStorage.getItem('excludedVehicles')) || [];
+            excludedVehicles.forEach(function(chassi) {
+                $("tr[data-id='" + chassi + "']").remove();
+            });
+            
+            // Carregar veículos salvos localmente
+            loadLocalVehicles();
+            
+            // Ativar tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+
+            // Implementação da busca
+            $("#searchButton").click(function() {
+                const searchTerm = $("#searchInput").val().toLowerCase();
+                $("tbody tr").each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    if (rowText.includes(searchTerm)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // Implementação do filtro de status
+            $(".dropdown-item").click(function(e) {
+                e.preventDefault();
+                const status = $(this).data("status");
+                $("#statusFilterDropdown").text($(this).text());
+                
+                if (status === "all") {
+                    $("tbody tr").show();
+                } else {
+                    $("tbody tr").each(function() {
+                        const rowStatus = $(this).find("td:nth-child(8) .badge").text().toLowerCase();
+                        if (status === "ok" && rowStatus === "ok") {
+                            $(this).show();
+                        } else if (status === "pendente" && rowStatus === "pendente") {
+                            $(this).show();
+                        } else if (status === "aprovado" && rowStatus === "aprovado") {
+                            $(this).show();
+                        } else if (status === "em-processamento" && rowStatus === "em processamento") {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+                }
+            });
+
+            // Botão de editar
+            $(document).on("click", ".edit-btn", function() {
+                const chassi = $(this).data("id");
+                openEditModal(chassi);
+            });
+
+            // Botão de excluir
+            $(document).on("click", ".delete-btn", function() {
+                const chassi = $(this).data("id");
+                if (confirm("Tem certeza que deseja excluir o veículo com chassi " + chassi + "?")) {
+                    deleteVehicle(chassi);
+                }
+            });
+
+            // Função para abrir modal de edição
+            function openEditModal(chassi) {
+                // Encontrar os dados da linha
+                const row = $("tr[data-id='" + chassi + "']");
+                const container = row.find("td:eq(0)").text();
+                const engine = row.find("td:eq(2)").text();
+                const branchCode = row.find("td:eq(3)").text();
+                const color = row.find("td:eq(4)").text();
+                const modelYear = row.find("td:eq(5)").text();
+
+                // Criar o modal dinamicamente
+                const modalHtml = `
+                <div class="modal fade" id="editVehicleModal" tabindex="-1" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editVehicleModalLabel">Editar Veículo</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editVehicleForm">
+                                    <input type="hidden" id="editChassi" value="${chassi}">
+                                    <div class="mb-3">
+                                        <label for="editContainer" class="form-label">Nº Container</label>
+                                        <input type="text" class="form-control" id="editContainer" value="${container}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editEngine" class="form-label">Motor</label>
+                                        <input type="text" class="form-control" id="editEngine" value="${engine}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editBranchCode" class="form-label">Filial</label>
+                                        <input type="number" class="form-control" id="editBranchCode" value="${branchCode}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editColor" class="form-label">Cor</label>
+                                        <input type="text" class="form-control" id="editColor" value="${color}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editModelYear" class="form-label">Ano Modelo</label>
+                                        <input type="number" class="form-control" id="editModelYear" value="${modelYear}">
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="saveVehicleBtn">Salvar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+                // Remover modal anterior se existir
+                $("#editVehicleModal").remove();
+                
+                // Adicionar o modal ao DOM
+                $("body").append(modalHtml);
+                
+                // Inicializar o modal
+                const editModal = new bootstrap.Modal(document.getElementById('editVehicleModal'));
+                editModal.show();
+                
+                // Configurar o botão de salvar
+                $("#saveVehicleBtn").click(function() {
+                    saveVehicle();
+                });
+            }
+
+            // Função para salvar as alterações do veículo
+            function saveVehicle() {
+                const chassi = $("#editChassi").val();
+                const container = $("#editContainer").val();
+                const engine = $("#editEngine").val();
+                const branchCode = $("#editBranchCode").val();
+                const color = $("#editColor").val();
+                const modelYear = $("#editModelYear").val();
+                
+                // Aqui você pode implementar a chamada AJAX para salvar os dados no servidor
+                // Por enquanto, vamos apenas atualizar a interface
+                
+                const row = $("tr[data-id='" + chassi + "']");
+                row.find("td:eq(0)").text(container);
+                row.find("td:eq(2)").text(engine);
+                row.find("td:eq(3)").text(branchCode);
+                row.find("td:eq(4)").text(color);
+                row.find("td:eq(5)").text(modelYear);
+                
+                // Salvar as alterações no localStorage
+                saveEditedVehicle(chassi, {
+                    container: container,
+                    engine: engine,
+                    branchCode: branchCode,
+                    color: color,
+                    modelYear: modelYear
+                });
+                
+                // Atualizar veículo salvo localmente
+                updateLocalVehicle(chassi, container, engine, branchCode, color, modelYear);
+                
+                // Fechar o modal
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editVehicleModal'));
+                editModal.hide();
+                
+                // Mostrar mensagem de sucesso
+                alert("Veículo atualizado com sucesso!");
+            }
+
+            // Função para excluir um veículo
+            function deleteVehicle(chassi) {
+                // Aqui você pode implementar a chamada AJAX para excluir o veículo no servidor
+                // Por enquanto, vamos apenas remover a linha da tabela e salvar no localStorage
+                
+                // Adicionar o chassi à lista de veículos excluídos no localStorage
+                const excludedVehicles = JSON.parse(localStorage.getItem('excludedVehicles')) || [];
+                if (!excludedVehicles.includes(chassi)) {
+                    excludedVehicles.push(chassi);
+                    localStorage.setItem('excludedVehicles', JSON.stringify(excludedVehicles));
+                }
+                
+                // Remover o veículo da lista de veículos salvos localmente
+                removeLocalVehicle(chassi);
+                
+                $("tr[data-id='" + chassi + "']").fadeOut(300, function() {
+                    $(this).remove();
+                    updateRecordCount();
+                });
+                
+                // Mostrar mensagem de sucesso
+                alert("Veículo excluído com sucesso!");
+            }
+            
+            // Função para salvar veículo editado no localStorage
+            function saveEditedVehicle(chassi, data) {
+                const editedVehicles = JSON.parse(localStorage.getItem('editedVehicles')) || {};
+                editedVehicles[chassi] = data;
+                localStorage.setItem('editedVehicles', JSON.stringify(editedVehicles));
+            }
+            
+            // Função para atualizar o contador de registros
+            function updateRecordCount() {
+                const count = $("tbody tr:visible").length;
+                $(".badge.bg-primary").text(count + " registros");
+            }
+            
+            // Função para carregar veículos salvos localmente
+            function loadLocalVehicles() {
+                try {
+                    console.log("Iniciando carregamento de veículos locais");
+                    
+                    // Obter veículos salvos
+                    let savedVehicles = [];
+                    try {
+                        const savedVehiclesStr = localStorage.getItem('savedVehicles');
+                        console.log("Dados brutos do localStorage:", savedVehiclesStr);
+                        
+                        if (savedVehiclesStr) {
+                            savedVehicles = JSON.parse(savedVehiclesStr);
+                            if (!Array.isArray(savedVehicles)) {
+                                console.error("savedVehicles não é um array:", savedVehicles);
+                                savedVehicles = [];
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Erro ao obter veículos salvos:", e);
+                        savedVehicles = [];
+                    }
+                    
+                    console.log("Veículos a serem carregados:", savedVehicles);
+                    
+                    if (savedVehicles.length === 0) {
+                        console.log("Nenhum veículo salvo localmente");
+                        return;
+                    }
+                    
+                    const tbody = $("tbody");
+                    const excludedVehicles = JSON.parse(localStorage.getItem('excludedVehicles')) || [];
+                    
+                    savedVehicles.forEach(function(vehicle) {
+                        // Verificar se o veículo não está na lista de excluídos
+                        if (!excludedVehicles.includes(vehicle.chassis)) {
+                            // Verificar se o veículo já existe na tabela
+                            if ($("tr[data-id='" + vehicle.chassis + "']").length === 0) {
+                                console.log("Adicionando veículo à tabela:", vehicle);
+                                
+                                const row = `
+                                <tr data-id="${vehicle.chassis}" data-local="true">
+                                    <td>${vehicle.containerNumber}</td>
+                                    <td>${vehicle.chassis}</td>
+                                    <td>${vehicle.engine}</td>
+                                    <td>${vehicle.branchCode}</td>
+                                    <td>${vehicle.color}</td>
+                                    <td>${vehicle.modelYear}</td>
+                                    <td>${vehicle.dateRegistered || new Date().toLocaleDateString('pt-BR')}</td>
+                                    <td><span class="badge bg-warning">Pendente</span></td>
+                                    <td><span class="badge bg-warning">Novo</span></td>
+                                    <td>
+                                        <div class="d-flex">
+                                            <button class="btn btn-sm btn-success me-1">Solicitar Placa</button>
+                                            <button class="btn btn-sm btn-outline-primary edit-btn me-1" data-id="${vehicle.chassis}" title="Editar veículo">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${vehicle.chassis}" data-bs-toggle="tooltip" title="Excluir veículo">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                                
+                                tbody.append(row);
+                            } else {
+                                console.log("Veículo já existe na tabela:", vehicle.chassis);
+                            }
+                        } else {
+                            console.log("Veículo está na lista de excluídos:", vehicle.chassis);
+                        }
+                    });
+                    
+                    // Inicializar tooltips para os novos botões
+                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl)
+                    });
+                    
+                    // Atualizar o contador de registros
+                    updateRecordCount();
+                    
+                    console.log("Carregamento de veículos locais concluído");
+                } catch (error) {
+                    console.error("Erro ao carregar veículos locais:", error);
+                }
+            }
+            
+            // Função para atualizar um veículo salvo localmente
+            function updateLocalVehicle(chassi, container, engine, branchCode, color, modelYear) {
+                const savedVehicles = JSON.parse(localStorage.getItem('savedVehicles')) || [];
+                
+                // Encontrar o veículo na lista
+                const index = savedVehicles.findIndex(v => v.chassis === chassi);
+                
+                if (index !== -1) {
+                    // Atualizar os dados
+                    savedVehicles[index].containerNumber = container;
+                    savedVehicles[index].engine = engine;
+                    savedVehicles[index].branchCode = branchCode;
+                    savedVehicles[index].color = color;
+                    savedVehicles[index].modelYear = modelYear;
+                    
+                    // Salvar no localStorage
+                    localStorage.setItem('savedVehicles', JSON.stringify(savedVehicles));
+                }
+            }
+            
+            // Função para remover um veículo salvo localmente
+            function removeLocalVehicle(chassi) {
+                const savedVehicles = JSON.parse(localStorage.getItem('savedVehicles')) || [];
+                
+                // Filtrar o veículo da lista
+                const updatedVehicles = savedVehicles.filter(v => v.chassis !== chassi);
+                
+                // Salvar no localStorage
+                localStorage.setItem('savedVehicles', JSON.stringify(updatedVehicles));
+            }
+            
+            // Botão para limpar o localStorage (para testes)
+            $("#clearStorageBtn").click(function() {
+                if (confirm("Tem certeza que deseja limpar o armazenamento local? Isso restaurará todos os veículos excluídos.")) {
+                    localStorage.removeItem('excludedVehicles');
+                    localStorage.removeItem('editedVehicles');
+                    location.reload();
+                }
+            });
+        });
+    </script>
+}

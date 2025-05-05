@@ -1,0 +1,90 @@
+@{
+    ViewData["Title"] = "Solicitação de Placa";
+}
+
+<h2 class="mb-4">Solicitação de Placa</h2>
+
+<div class="processamento-container">
+    <div class="processamento-titulo">Processamento de Veículos</div>
+    <p>Insira os IDs dos veículos que deseja processar (um por linha ou separados por vírgula)</p>
+    
+    <form method="post" action="@Url.Action("ProcessarVeiculos", "Vehicle")">
+        <div class="mb-3">
+            <textarea class="form-control processamento-textarea" id="vehicleIdsText" name="vehicleIdsText" rows="6"></textarea>
+        </div>
+        
+        <div class="processamento-exemplo">
+            Exemplo:
+        </div>
+        <pre class="processamento-exemplo-text mb-3">
+AE45MBT3-DRC4-4737-9C8D-CBFD7CADF132
+9F77A321-5MA-4197-B4BD-47D16DBEBD80
+B19CBD8H-C5D3-462A-AEF5-95354DEF9E4E</pre>
+        
+        <div class="d-flex">
+            <button type="submit" class="btn btn-primary me-2">Processar Veículos</button>
+            <button type="reset" class="btn btn-secondary">Limpar</button>
+        </div>
+    </form>
+</div>
+
+@if (ViewData["ProcessingResult"] != null)
+{
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Resultado do Processamento</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert @(ViewData["Success"] != null && (bool)ViewData["Success"] ? "alert-success" : "alert-danger")">
+                @ViewData["ProcessingResult"]
+            </div>
+            
+            @if (ViewData["VehicleInfos"] != null)
+            {
+                var vehicleInfos = (List<VehicleRegistrationSystem.Models.VehicleInfo>)ViewData["VehicleInfos"];
+                
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Chassi</th>
+                                <th>Motor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var info in vehicleInfos)
+                            {
+                                <tr>
+                                    <td>@info.Chassis</td>
+                                    <td>@info.Chassis</td>
+                                    <td>@info.Engine</td>
+                                    <td>
+                                        <span class="badge bg-success">Processado</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Botão para processar veículos
+            $("form").submit(function (e) {
+                const vehicleIdsText = $("#vehicleIdsText").val();
+                
+                if (!vehicleIdsText.trim()) {
+                    alert("Por favor, insira pelo menos um ID de veículo.");
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}
