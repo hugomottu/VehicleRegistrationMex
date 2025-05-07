@@ -3,17 +3,18 @@ using System.Diagnostics;
 using System.Text;
 using VehicleRegistrationSystem.Models;
 using VehicleRegistrationSystem.Services;
-using VehicleRegistrationSystem.Extensions;
 
 namespace VehicleRegistrationSystem.Controllers
 {
     public class VehicleController : Controller
     {
         private readonly VehicleService _vehicleService;
+        private readonly SettingsService _settingsService;
 
-        public VehicleController(VehicleService vehicleService)
+        public VehicleController(VehicleService vehicleService, SettingsService settingsService)
         {
             _vehicleService = vehicleService;
+            _settingsService = settingsService;
         }
 
         public IActionResult Index()
@@ -32,11 +33,8 @@ namespace VehicleRegistrationSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> NovosVeiculos(IFormFile csvFile, int branchCode = 87, string color = "PRETO", int modelYear = 2025)
+        public IActionResult NovosVeiculos(IFormFile csvFile, int branchCode = 87, string color = "PRETO", int modelYear = 2025)
         {
-            Console.WriteLine($"Arquivo recebido: {csvFile?.FileName}, Tamanho: {csvFile?.Length} bytes");
-            Console.WriteLine($"Parâmetros adicionais: branchCode={branchCode}, color={color}, modelYear={modelYear}");
-            
             if (csvFile == null || csvFile.Length == 0)
             {
                 ModelState.AddModelError("csvFile", "Por favor, selecione um arquivo CSV para upload.");
@@ -44,7 +42,6 @@ namespace VehicleRegistrationSystem.Controllers
             }
 
             var csvService = new CsvService();
-            var vehicleRegistrationService = new VehicleRegistrationService();
             var vehicles = new List<NewVehicle>();
 
             try
@@ -60,31 +57,17 @@ namespace VehicleRegistrationSystem.Controllers
                 }
                 else
                 {
-                    Console.WriteLine($"Processado com sucesso: {vehicles.Count} veículos");
-                    
-                    // Atualiza os valores dos campos adicionais para todos os veículos
                     foreach (var vehicle in vehicles)
                     {
                         vehicle.BranchCode = branchCode;
                         vehicle.Color = color;
                         vehicle.ModelYear = modelYear;
-                        vehicle.ManufactureYear = modelYear; // Usando o mesmo valor do modelYear para manufactureYear
-                        
-                        // Registra o veículo na API
-                        var (success, message, response) = await vehicleRegistrationService.RegisterVehicleAsync(vehicle);
-                        
-                        // Armazena o resultado no ViewData para exibir na view
-                        ViewData[$"Status_{vehicle.Chassis}"] = true;
-                        ViewData[$"Success_{vehicle.Chassis}"] = success;
-                        ViewData[$"Message_{vehicle.Chassis}"] = message;
-                        
-                        Console.WriteLine($"Registro do veículo {vehicle.Chassis}: {(success ? "Sucesso" : "Falha")} - {message}");
+                        vehicle.ManufactureYear = modelYear;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro ao processar arquivo: {ex.Message}");
                 ModelState.AddModelError("csvFile", $"Erro ao processar o arquivo: {ex.Message}");
             }
 
@@ -106,8 +89,7 @@ namespace VehicleRegistrationSystem.Controllers
                 BranchCode = 87,
                 Color = "PRETO",
                 ModelYear = 2025,
-                ManufactureYear = 2025,
-                Country = 144
+                ManufactureYear = 2025
             });
         }
 
@@ -119,7 +101,7 @@ namespace VehicleRegistrationSystem.Controllers
                 if (callApi)
                 {
                     // Se a opção de chamar a API estiver marcada, registra o veículo na API
-                    var vehicleRegistrationService = new VehicleRegistrationService();
+                    var vehicleRegistrationService = new VehicleRegistrationService(_settingsService);
                     var (success, message, response) = await vehicleRegistrationService.RegisterVehicleAsync(vehicle);
                     
                     if (success)
@@ -168,6 +150,12 @@ namespace VehicleRegistrationSystem.Controllers
                     // Verificar se o veículo foi encontrado
                     if (vehicle != null)
                     {
+                        // Buscar URL do anexo
+                        var anexoUrl = await _vehicleService.GetAnexoUrlAsync(id);
+                        
+                        // Enviar para o job
+                        await JobSender.SendJobAsync(vehicle, anexoUrl, _settingsService);
+                        
                         result.Success = true;
                         result.Message = "Processado com sucesso";
                         result.VehicleInfo = vehicle;
@@ -202,7 +190,7 @@ namespace VehicleRegistrationSystem.Controllers
                 // Remove espaços e aspas
                 var trimmedLine = line.Trim().Trim('"', '\'');
                 
-                // Verifica se a linha parece ser um GUID válido
+                // Verifica se a linha parece ser um ID válido
                 if (!string.IsNullOrWhiteSpace(trimmedLine) && trimmedLine.Length >= 32)
                 {
                     vehicleIds.Add(trimmedLine);

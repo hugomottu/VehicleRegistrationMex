@@ -3,14 +3,18 @@ using System.Net.Http;
 using System.Text;
 using VehicleRegistrationSystem.Constants;
 using VehicleRegistrationSystem.Models;
+using VehicleRegistrationSystem.Services;
 
 namespace VehicleRegistrationSystem.Utils
 {
     public static class JobSender
     {
         // Método assíncrono para enviar os dados do veículo para a API
-        public static async Task SendJobAsync(VehicleInfo vehicleInfo, string? anexoUrl)
+        public static async Task SendJobAsync(VehicleInfo vehicleInfo, string? anexoUrl, SettingsService settingsService)
         {
+            // Obter as configurações atualizadas
+            var settings = await settingsService.GetSettingsAsync();
+            
             var details = new VehicleDetails();
 
             var jsonToSend = new
@@ -65,11 +69,11 @@ namespace VehicleRegistrationSystem.Utils
             // Criação de um cliente HTTP para enviar a requisição
             using var client = new HttpClient();
             // Adiciona o token de autorização no cabeçalho da requisição
-            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {AppConstants.CoreJobApiToken}");
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {settings.CoreJobApiToken}");
             // Serializa o objeto JSON para enviar como corpo da requisição
             var content = new StringContent(JsonConvert.SerializeObject(jsonToSend), Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync(AppConstants.CoreJobApiUrl, content);
+            var response = await client.PostAsync(settings.CoreJobApiUrl, content);
             // Lê o resultado da resposta da API
             var result = await response.Content.ReadAsStringAsync();
             Console.WriteLine(response.IsSuccessStatusCode ? "Requisição enviada com sucesso!" : $"Erro: {response.StatusCode}{result}");

@@ -10,6 +10,10 @@ builder.Services.AddScoped<VehicleService>();
 builder.Services.AddScoped<RequestService>();
 builder.Services.AddScoped<CsvService>();
 builder.Services.AddScoped<VehicleRegistrationService>();
+builder.Services.AddScoped<SettingsService>();
+
+// Adicionar HttpContextAccessor para acesso à sessão
+builder.Services.AddHttpContextAccessor();
 
 // Adicionar suporte a sessão
 builder.Services.AddDistributedMemoryCache();

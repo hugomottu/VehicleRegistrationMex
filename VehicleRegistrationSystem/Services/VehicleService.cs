@@ -1,20 +1,20 @@
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
-using VehicleRegistrationSystem.Constants;
 using VehicleRegistrationSystem.Models;
+using VehicleRegistrationSystem.Services;
 
 namespace VehicleRegistrationSystem.Services
 {
     public class VehicleService // Classe responsável pelos serviços de consulta de veículos
     {
         private readonly HttpClient _httpClient; // Cliente HTTP usado para fazer requisições para a API
+        private readonly SettingsService _settingsService; // Serviço para obter as configurações dinâmicas
 
         // Construtor da classe, inicializando o HttpClient e configurando o cabeçalho de autorização
-        public VehicleService() 
+        public VehicleService(SettingsService settingsService) 
         {
             _httpClient = new HttpClient();
-            // Adiciona o token de autorização no cabeçalho da requisição
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {AppConstants.VehicleApiToken}");
+            _settingsService = settingsService;
         }
 
         // Método assíncrono para buscar as informações do veículo com base no ID do veículo
@@ -22,9 +22,16 @@ namespace VehicleRegistrationSystem.Services
         {
             try
             {
+                // Obter as configurações atualizadas
+                var settings = await _settingsService.GetSettingsAsync();
+                
+                // Configurar o token de autorização para cada requisição
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {settings.VehicleApiToken}");
+                
                 Console.WriteLine($"Buscando informações do veículo com ID: {vehicleId}");
                 // Faz a requisição GET para buscar as informações do veículo usando o ID
-                var response = await _httpClient.GetAsync(AppConstants.VehicleApiBaseUrl + vehicleId);
+                var response = await _httpClient.GetAsync(settings.VehicleApiBaseUrl + vehicleId);
                 
                 // Registra o status da resposta
                 Console.WriteLine($"Status da resposta: {(int)response.StatusCode} - {response.StatusCode}");
@@ -71,9 +78,16 @@ namespace VehicleRegistrationSystem.Services
         {
             try
             {
+                // Obter as configurações atualizadas
+                var settings = await _settingsService.GetSettingsAsync();
+                
+                // Configurar o token de autorização para cada requisição
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {settings.VehicleApiToken}");
+                
                 Console.WriteLine($"Buscando anexos para o veículo com ID: {vehicleId}");
                 // Faz a requisição GET para buscar os anexos do veículo usando o ID do veículo
-                var response = await _httpClient.GetAsync(AppConstants.AnexosApiBaseUrl + $"{vehicleId}/14");
+                var response = await _httpClient.GetAsync(settings.AnexosApiBaseUrl + $"{vehicleId}/14");
                 
                 // Registra o status da resposta
                 Console.WriteLine($"Status da resposta de anexos: {(int)response.StatusCode} - {response.StatusCode}");

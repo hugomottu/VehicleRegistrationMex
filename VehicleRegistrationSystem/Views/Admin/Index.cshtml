@@ -1,0 +1,85 @@
+@model VehicleRegistrationSystem.Models.AppSettings
+
+@{
+    ViewData["Title"] = "Administrador";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4>Configurações do Sistema</h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-action="SaveSettings" method="post">
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Tokens de API</h5>
+                            <div class="mb-3">
+                                <label asp-for="VehicleApiToken" class="form-label">Token da API de Veículos (Produção)</label>
+                                <textarea asp-for="VehicleApiToken" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="VehicleApiToken" class="text-danger"></span>
+                                <div class="form-text">Token usado para autenticação na API de veículos.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="CoreJobApiToken" class="form-label">Token da API de Core Jobs (Homologação)</label>
+                                <textarea asp-for="CoreJobApiToken" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="CoreJobApiToken" class="text-danger"></span>
+                                <div class="form-text">Token usado para autenticação na API de Core Jobs (RPA).</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">URLs das APIs</h5>
+                            <div class="mb-3">
+                                <label asp-for="VehicleApiBaseUrl" class="form-label">URL Base da API de Veículos</label>
+                                <input asp-for="VehicleApiBaseUrl" class="form-control" />
+                                <span asp-validation-for="VehicleApiBaseUrl" class="text-danger"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="AnexosApiBaseUrl" class="form-label">URL da API de Anexos</label>
+                                <input asp-for="AnexosApiBaseUrl" class="form-control" />
+                                <span asp-validation-for="AnexosApiBaseUrl" class="text-danger"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="CoreJobApiUrl" class="form-label">URL da API de Core Jobs</label>
+                                <input asp-for="CoreJobApiUrl" class="form-control" />
+                                <span asp-validation-for="CoreJobApiUrl" class="text-danger"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="RequestApiBaseUrl" class="form-label">URL Base da API de Requisições</label>
+                                <input asp-for="RequestApiBaseUrl" class="form-control" />
+                                <span asp-validation-for="RequestApiBaseUrl" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        @if (Model.LastUpdated != default)
+                        {
+                            <div class="mb-3 text-muted">
+                                <small>Última atualização: @Model.LastUpdated.ToString("dd/MM/yyyy HH:mm:ss")</small>
+                            </div>
+                        }
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save"></i> Salvar Configurações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

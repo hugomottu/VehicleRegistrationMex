@@ -6,24 +6,33 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using VehicleRegistrationSystem.Constants;
 using VehicleRegistrationSystem.Models;
+using VehicleRegistrationSystem.Services;
 
 namespace VehicleRegistrationSystem.Services
 {
     public class VehicleRegistrationService
     {
         private readonly HttpClient _httpClient;
+        private readonly SettingsService _settingsService;
 
-        public VehicleRegistrationService()
+        public VehicleRegistrationService(SettingsService settingsService)
         {
             _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstants.VehicleApiToken);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _settingsService = settingsService;
         }
 
         public async Task<(bool Success, string Message, object Response)> RegisterVehicleAsync(NewVehicle vehicle)
         {
             try
             {
+                // Obter as configurações atualizadas
+                var settings = await _settingsService.GetSettingsAsync();
+                
+                // Configurar o token de autorização para cada requisição
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.VehicleApiToken);
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                
                 // Criar o payload para a API
                 var payload = new VehicleApiPayload
                 {
@@ -46,7 +55,7 @@ namespace VehicleRegistrationSystem.Services
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                 // Enviar a requisição para a API
-                var response = await _httpClient.PostAsync(AppConstants.VehicleApiBaseUrl, content);
+                var response = await _httpClient.PostAsync(settings.VehicleApiBaseUrl, content);
                 
                 // Ler a resposta
                 var responseContent = await response.Content.ReadAsStringAsync();

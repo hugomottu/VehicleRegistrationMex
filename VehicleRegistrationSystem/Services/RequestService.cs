@@ -1,17 +1,19 @@
 using Newtonsoft.Json;
 using VehicleRegistrationSystem.Constants;
 using VehicleRegistrationSystem.Models;
+using VehicleRegistrationSystem.Services;
 
 namespace VehicleRegistrationSystem.Services
 {
     public class RequestService
     {
         private readonly HttpClient _httpClient;
+        private readonly SettingsService _settingsService;
 
-        public RequestService()
+        public RequestService(SettingsService settingsService)
         {
             _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {AppConstants.VehicleApiToken}");
+            _settingsService = settingsService;
         }
 
         /// <summary>
@@ -23,7 +25,14 @@ namespace VehicleRegistrationSystem.Services
         /// <returns>Resposta contendo a lista de requisições e informações de paginação</returns>
         public async Task<RequestResponse?> GetRequestsAsync(int page = 1, int pageSize = 10, string? status = null)
         {
-            string url = $"{AppConstants.RequestApiBaseUrl}?page={page}&pageSize={pageSize}";
+            // Obter as configurações atualizadas
+            var settings = await _settingsService.GetSettingsAsync();
+            
+            // Configurar o token de autorização para cada requisição
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {settings.VehicleApiToken}");
+            
+            string url = $"{settings.RequestApiBaseUrl}?page={page}&pageSize={pageSize}";
             
             if (!string.IsNullOrEmpty(status))
             {
@@ -45,7 +54,14 @@ namespace VehicleRegistrationSystem.Services
         /// <returns>Informações detalhadas da requisição</returns>
         public async Task<RequestInfo?> GetRequestDetailsAsync(string requestNumber)
         {
-            var response = await _httpClient.GetAsync($"{AppConstants.RequestApiBaseUrl}/{requestNumber}");
+            // Obter as configurações atualizadas
+            var settings = await _settingsService.GetSettingsAsync();
+            
+            // Configurar o token de autorização para cada requisição
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {settings.VehicleApiToken}");
+            
+            var response = await _httpClient.GetAsync($"{settings.RequestApiBaseUrl}/{requestNumber}");
             
             if (!response.IsSuccessStatusCode) return null;
             

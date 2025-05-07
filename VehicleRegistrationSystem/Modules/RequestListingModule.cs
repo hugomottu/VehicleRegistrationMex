@@ -12,10 +12,12 @@ namespace VehicleRegistrationSystem.Modules
     public class RequestListingModule
     {
         private readonly RequestService _requestService;
+        private readonly SettingsService _settingsService;
 
-        public RequestListingModule()
+        public RequestListingModule(SettingsService settingsService)
         {
-            _requestService = new RequestService();
+            _settingsService = settingsService;
+            _requestService = new RequestService(settingsService);
         }
 
         /// <summary>
@@ -25,7 +27,7 @@ namespace VehicleRegistrationSystem.Modules
         /// <param name="pageSize">Quantidade de itens por página</param>
         /// <param name="status">Status das requisições para filtrar (opcional)</param>
         /// <returns>Tarefa assíncrona que retorna a lista de requisições</returns>
-        public async Task<List<RequestInfo>> ListRequestsAsync(int page = 1, int pageSize = 10, string status = null)
+        public async Task<List<RequestInfo>> ListRequestsAsync(int page = 1, int pageSize = 10, string? status = null)
         {
             try
             {
@@ -58,7 +60,7 @@ namespace VehicleRegistrationSystem.Modules
         /// </summary>
         /// <param name="requestNumber">Número da requisição</param>
         /// <returns>Tarefa assíncrona que retorna os detalhes da requisição</returns>
-        public async Task<RequestInfo> GetRequestDetailsAsync(string requestNumber)
+        public async Task<RequestInfo?> GetRequestDetailsAsync(string requestNumber)
         {
             try
             {
@@ -83,7 +85,7 @@ namespace VehicleRegistrationSystem.Modules
         /// Exibe os detalhes de uma requisição formatados para console
         /// </summary>
         /// <param name="request">Objeto com informações da requisição</param>
-        public void DisplayRequestDetails(RequestInfo request)
+        public void DisplayRequestDetails(RequestInfo? request)
         {
             if (request == null)
             {
@@ -134,7 +136,7 @@ namespace VehicleRegistrationSystem.Modules
         /// Exibe uma lista de requisições formatada para console
         /// </summary>
         /// <param name="requests">Lista de requisições</param>
-        public void DisplayRequestList(List<RequestInfo> requests)
+        public void DisplayRequestList(List<RequestInfo>? requests)
         {
             if (requests == null || requests.Count == 0)
             {
